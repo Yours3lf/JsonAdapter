@@ -43,12 +43,15 @@ int main()
     expect(dumped["name"].get<std::string>() == "bea", "dump then parse should keep the assigned string");
     expect(dumped["ok"].get<bool>(), "dump then parse should keep the flag");
 
-    Json nonFinite = Json::parse("{\"x\":inf,\"y\":NaN}");
-    expect(std::isinf(nonFinite["x"].get<double>()), "inf should parse");
+    Json nonFinite = Json::parse("{\"x\":Infinity,\"y\":NaN,\"z\":-Inf}");
+    expect(std::isinf(nonFinite["x"].get<double>()), "Infinity should parse");
     expect(std::isnan(nonFinite["y"].get<double>()), "NaN should parse");
+    expect(std::isinf(nonFinite["z"].get<double>()) && nonFinite["z"].get<double>() < 0, "-Inf should parse");
     Json nonFiniteAgain = Json::parse(nonFinite.dump());
-    expect(std::isinf(nonFiniteAgain["x"].get<double>()), "dumped inf should parse again");
+    expect(std::isinf(nonFiniteAgain["x"].get<double>()), "dumped Infinity should parse again");
     expect(std::isnan(nonFiniteAgain["y"].get<double>()), "dumped NaN should parse again");
+    expect(std::isinf(nonFiniteAgain["z"].get<double>()) && nonFiniteAgain["z"].get<double>() < 0,
+        "dumped -Inf should parse again");
 
     Json discarded = Json::parse("{", nullptr, false);
     expect(discarded.is_discarded(), "malformed text with exceptions off should be discarded");

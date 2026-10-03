@@ -32,8 +32,9 @@ namespaces have to stay distinct, or the copies collide at link time.
 `parse(text, callback, false)` returns a discarded value instead. The callback
 pointer is ignored.
 
-Non-finite numbers parse and write (`inf`, `Infinity`, `NaN`), so a cereal
-document that contains them round-trips.
+Non-finite numbers parse and write (`Inf`, `Infinity`, `NaN`, and the same
+tokens with a leading minus), so a cereal document that contains them
+round-trips.
 
 Object and array nesting deeper than 64 levels is rejected before the parser
 runs. RapidJSON's recursive parser overflows the stack on a few dozen
