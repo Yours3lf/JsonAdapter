@@ -4,7 +4,7 @@
 // Keep this copy in another namespace so the two do not collide in one binary.
 #define RAPIDJSON_NAMESPACE jsonadapter_rapidjson
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ >= 14
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtemplate-body"
 #endif
@@ -12,7 +12,7 @@
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ >= 14
 #pragma GCC diagnostic pop
 #endif
 
@@ -692,8 +692,11 @@ std::string Json::iterator::key() const
 {
     if (!object || parent == nullptr || V(parent->node) == nullptr)
         return {};
-    const auto &member = V(parent->node)->MemberBegin()[index];
-    return std::string(member.name.GetString(), member.name.GetStringLength());
+    // Keep the iterator. MemberBegin() is a temporary, and binding a
+    // reference to MemberBegin()[index] dangles when that temporary dies.
+    auto members = V(parent->node)->MemberBegin();
+    const auto &name = members[index].name;
+    return std::string(name.GetString(), name.GetStringLength());
 }
 
 // Copies the object member or array element at this iterator.
@@ -781,7 +784,7 @@ JsonRef JsonRef::operator[](const char *key)
 // Copies a child of the referenced object looked up by a C-string key.
 Json JsonRef::operator[](const char *key) const
 {
-    return static_cast<const JsonRef &>(*this)[std::string_view(key != nullptr ? key : "")];
+    return (*this)[std::string_view(key != nullptr ? key : "")];
 }
 
 // Returns a writable element of the referenced array, appending a null at the new end.
@@ -986,8 +989,9 @@ std::string JsonRef::iterator::key() const
 {
     if (!object || parent == nullptr || V(parent->slot) == nullptr)
         return {};
-    const auto &member = V(parent->slot)->MemberBegin()[index];
-    return std::string(member.name.GetString(), member.name.GetStringLength());
+    auto members = V(parent->slot)->MemberBegin();
+    const auto &name = members[index].name;
+    return std::string(name.GetString(), name.GetStringLength());
 }
 
 // Returns a reference to the object member or array element at this iterator.
